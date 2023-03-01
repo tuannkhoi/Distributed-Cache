@@ -1,5 +1,5 @@
 build:
 	go build -o bin/gdcache
 
-run:
+run: build
 	./bin/gdcache

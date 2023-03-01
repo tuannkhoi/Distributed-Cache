@@ -21,7 +21,14 @@ func (c *Cache) Set(key, value []byte, ttl time.Duration) error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	c.data[string(key)] = value
+	keyStr := string(key)
+
+	c.data[keyStr] = value
+
+	go func() {
+		<-time.After(ttl)
+		delete(c.data, keyStr)
+	}()
 
 	return nil
 }

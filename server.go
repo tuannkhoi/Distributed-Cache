@@ -43,8 +43,6 @@ func (s *Server) Start() error {
 
 		go s.handleConnection(conn)
 	}
-
-	return nil
 }
 
 func (s *Server) handleConnection(conn net.Conn) {
@@ -63,7 +61,33 @@ func (s *Server) handleConnection(conn net.Conn) {
 			break
 		}
 
-		msg := buf[:n]
-		fmt.Println(string(msg))
+		go s.handleCommand(conn, buf[:n])
 	}
+}
+
+func (s *Server) handleCommand(conn net.Conn, rawCmd []byte) {
+	msg, err := parseMessage(rawCmd)
+	if err != nil {
+		log.Printf("parse command error: %s\n", err)
+		return
+	}
+
+	switch msg.Command {
+	case CMDSet:
+		if err = s.handleSetCmd(conn, msg); err != nil {
+			log.Printf("handle set command error: %s\n", err)
+			return
+		}
+	case CMDGet:
+	case CMDDel:
+	case CMDHas:
+	}
+}
+
+func (s *Server) handleSetCmd(conn net.Conn, msg *Message) error {
+	if err := s.cache.Set(msg.Key, msg.Value, msg.TTL); err != nil {
+		return err
+	}
+
+	return nil
 }
